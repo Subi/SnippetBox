@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/subi/snippetbox/pkg/models"
 )
 
@@ -11,20 +10,34 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
-func (m *SnippetModel) Insert(title, content, expires string) error {
+func (m *SnippetModel) Insert(title, content, expires string) (int, error) {
 	stmt := `INSERT INTO snippets (title, content, created, expires)
-    VALUES(?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? DAY)`
+    VALUES(?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? DAY))`
 
-	_, err := m.DB.Exec(stmt, title, content, expires)
+	result, err := m.DB.Exec(stmt, title, content, expires)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	fmt.Printf("Failed insert snippet: %v\n", err)
-	return nil
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
 }
 
 func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
-	return nil, nil
+	stmt := `SELECT id, title, content, created, expires FROM snippets
+	WHERE expires > UTC_TIMESTAMP() AND id = ?`
+	newSnippet := &models.Snippet{}
+	err := m.DB.QueryRow(stmt, id).Scan(&newSnippet.ID, &newSnippet.Title, &newSnippet.Content, &newSnippet.Created, &newSnippet.Expires)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, models.ErrNoRecord
+		}
+		return nil, err
+	}
+	return newSnippet, nil
 }
 
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
