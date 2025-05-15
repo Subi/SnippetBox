@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/subi/snippetbox/pkg/models"
-	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -13,23 +12,14 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 		return
 	}
-	files := []string{
-		"./ui/html/base.tmpl.html",
-		"./ui/html/pages/home.tmpl.html",
-		"./ui/html/partials/nav.tmpl.html",
-	}
-	ts, err := template.ParseFiles(files...)
+
+	s, err := app.snippets.Latest()
 	if err != nil {
-		app.errorLog.Println(err.Error())
 		app.serverError(w, err)
 		return
 	}
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		app.errorLog.Println(err.Error())
-		app.serverError(w, err)
-	}
-	w.Write([]byte("Hello from Snippetbox"))
+
+	app.render(w, r, "home.page.tmpl", &templateData{Snippets: s})
 }
 
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -46,8 +36,8 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	app.render(w, r, "show.page.tmpl", &templateData{Snippet: s})
 
-	fmt.Fprintf(w, "%v", *s)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
