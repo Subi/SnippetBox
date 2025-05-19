@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/justinas/nosurf"
+	"github.com/subi/snippetbox/pkg/models"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -12,6 +14,8 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	if td == nil {
 		td = &templateData{}
 	}
+	td.CSRFToken = nosurf.Token(r)
+	td.AuthenticatedUser = app.authenticatedUser(r)
 	td.CurrentYear = time.Now().Year()
 	td.Flash = app.session.PopString(r, "flash")
 	return td
@@ -49,4 +53,12 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
+}
+
+func (app *application) authenticatedUser(r *http.Request) *models.User {
+	user, ok := r.Context().Value(contextKeyUser).(*models.User)
+	if !ok {
+		return nil
+	}
+	return user
 }

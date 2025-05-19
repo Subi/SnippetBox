@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	s, err := app.snippets.Latest()
