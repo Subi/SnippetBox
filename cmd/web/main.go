@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golangcollege/sessions"
 	"github.com/joho/godotenv"
+	"github.com/subi/snippetbox/pkg/models"
 	"github.com/subi/snippetbox/pkg/models/mysql" // New import
 	"html/template"
 	"log"
@@ -19,12 +20,20 @@ type contextKey string
 var contextKeyUser = contextKey("user")
 
 type application struct {
-	errorLog      *log.Logger
-	infoLog       *log.Logger
-	snippets      *mysql.SnippetModel
+	errorLog *log.Logger
+	infoLog  *log.Logger
+	snippets interface {
+		Insert(string, string, string) (int, error)
+		Get(int) (*models.Snippet, error)
+		Latest() ([]*models.Snippet, error)
+	}
+	users interface {
+		Insert(string, string, string) error
+		Authenticate(string, string) (int, error)
+		Get(int) (*models.User, error)
+	}
 	session       *sessions.Session
 	templateCache map[string]*template.Template
-	users         *mysql.UserModel
 }
 
 func main() {
