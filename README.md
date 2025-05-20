@@ -1,4 +1,4 @@
-# SnippetBox
+# SnippetBox 
 
 Snippet box is a project that's apart of the Let's Go Book by Alex Edward's.
 
